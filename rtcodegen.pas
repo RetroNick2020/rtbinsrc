@@ -7,7 +7,7 @@ uses
 const
  NoLan    = 0;
  BasicLan = 1;
- BasicLNLan = 2;
+ GWBasicLan = 2;
  CLan     = 3;
  PascalLan= 4;
  FBBasicLan = 5;   //fix this in the future - just a hack right now to make things work with freebasic
@@ -56,12 +56,15 @@ type
 
                        LineBufStr : String;
                        NextLineNumber : integer;
+                       StepNumber     : integer;
 
   end;
 
   MemoProc = procedure(Msg : string);
 
 procedure CGInit(var mc : CodeGenRec);
+procedure CGReset(var mc : CodeGenRec);
+
 procedure CGSetLan(var mc : CodeGenRec;Lan : integer);
 procedure CGSetValuesTotal(var mc : CodeGenRec;amount : longint);
 procedure CGSetValueFormat(var mc : CodeGenRec;format : integer);
@@ -70,6 +73,7 @@ procedure CGWriteByte(var mc : CodeGenRec;value : byte);
 procedure CGSetValuesPerLine(var mc : CodeGenRec;amount : integer);
 procedure CGSetIndentOnFirstLine(var mc : CodeGenRec;indent : boolean);
 procedure CGSetIndent(var mc : CodeGenRec;isize : integer);
+Procedure CGSetLineNumber(var mc : CodeGenRec;Num : integer;StepNum : integer);
 
 procedure CGSetMemoProc(MP : MemoProc);
 procedure CGWrite(var mc : CodeGenRec ; Msg : string);
@@ -81,16 +85,15 @@ implementation
 
 var
  CGMemo : MemoProc;
- //LineBufStr : String ='';
+
 procedure CGSetMemoProc(MP : MemoProc);
 begin
- CGMemo:=MP;
+  CGMemo:=MP;
 end;
 
 procedure CGWrite(var mc : CodeGenRec ; Msg : string);
 begin
-// CGMemo(Msg);
- mc.LineBufStr:=mc.LineBufStr+Msg;
+  mc.LineBufStr:=mc.LineBufStr+Msg;
 end;
 
 
@@ -99,7 +102,6 @@ begin
  CGMemo(mc.LineBufStr);
  mc.LineBufStr:='';
 end;
-
 
 procedure CGSetIndent(var mc : CodeGenRec;isize : integer);
 begin
@@ -133,12 +135,12 @@ end;
 
 procedure CGInit(var mc : CodeGenRec);
 begin
-// mc.FTextPtr:=@F;
  mc.VC:=0;
  mc.VCL:=0;
  mc.LineCount:=0;
  mc.LineBufStr:='';
  mc.NextLineNumber:=1000;
+ mc.StepNumber:=10;
  CGSetIndent(mc,10);
  CGSetIndentOnFirstLine(mc,true);
  CGSetValuesPerLine(mc,10);
@@ -147,18 +149,33 @@ begin
  CGSetLan(mc,PascalLan);
 end;
 
+
+//Reset VC and VCL - used for Repeated Imports for GWBASIC
+procedure CGReset(var mc : CodeGenRec);
+begin
+ mc.VC:=0;
+ mc.VCL:=0;
+ mc.LineCount:=0;
+ mc.LineBufStr:='';
+end;
+
+Procedure CGSetLineNumber(var mc : CodeGenRec;Num : integer;StepNum : integer);
+begin
+ mc.NextLineNumber:=Num;
+ mc.StepNumber:=StepNum;
+end;
+
 function CGGetGWNextLineNumber(var mc :CodeGenRec) : integer;
 begin
  CGGetGWNextLineNumber:=mc.NextLineNumber;
- inc(mc.NextLineNumber,10);
+ inc(mc.NextLineNumber,mc.StepNumber);
 end;
 
 procedure CGWriteLineNumber(var mc : CodeGenRec);
 begin
- if (mc.LanId<>BasicLNLan) then exit;
+ if (mc.LanId<>GWBasicLan) then exit;
  if mc.VCL = 0 then
  begin
-//    Write(mc.FTextPtr^,GetGWNextLineNumber,' ');
    CGWrite(mc,IntToStr(CGGetGWNextLineNumber(mc))+' ');
  end;
 end;
@@ -168,7 +185,6 @@ begin
  if (mc.VC=mc.ValuesTotal) then exit;
  if mc.VCL = mc.ValuesPerLine then
  begin
-//    WriteLn(mc.FTextPtr^);
     CGWriteLn(mc);
     mc.VCL:=0;
     inc(mc.LineCount);
@@ -177,7 +193,7 @@ end;
 
 procedure CGWriteData(var mc : CodeGenRec);
 begin
-  if (mc.LanId=BasicLan) or (mc.LanId=BasicLNLan) then
+  if (mc.LanId=BasicLan) or (mc.LanId=GWBasicLan) then
   begin
     if mc.VCL = 0 then CGWrite(mc,'DATA ');
   end;
@@ -187,11 +203,10 @@ procedure CGWriteIndent(var mc : CodeGenRec);
 var
  indentstr : string;
 begin
- if (mc.LanId=BasicLan) or (mc.LanId=BasicLNLan)  then exit;
+ if (mc.LanId=BasicLan) or (mc.LanId=GWBasicLan)  then exit;
  if (mc.VCL = 0) then
  begin
-  if (mc.IndentOnFirst = false) and (mc.LineCount=0) then exit;
-//  Write(mc.FTextPtr^,' ':mc.InDentSize);
+   if (mc.IndentOnFirst = false) and (mc.LineCount=0) then exit;
    indentstr:=PadRight(' ',mc.InDentSize);
    CGWrite(mc,indentstr);
  end;
@@ -199,24 +214,17 @@ end;
 
 procedure CGWriteComma(var mc : CodeGenRec);
 begin
- if (mc.VC=mc.ValuesTotal) then
- begin
-//   write(FTEXT,'END');
-   exit;
- end;
-
+ if (mc.VC=mc.ValuesTotal) then exit;
  if mc.VCL > 0 then
  begin
    if (mc.VCL<mc.ValuesPerLine) then
    begin
-    // Write(mc.FTextPtr^,',');
      CGWrite(mc,',');
    end
    else if (mc.VCL=mc.ValuesPerLine)  then  //end of line but not last value
    begin
-     if (mc.LanId<>BasicLan) and (mc.LanId<>BasicLNLan) then
+     if (mc.LanId<>BasicLan) and (mc.LanId<>GWBasicLan) then
      begin
-       //Write(mc.FTextPtr^,','); //if not basic write a comma
        CGWrite(mc,',');
      end;
    end;
@@ -245,13 +253,11 @@ begin
 
  if  mc.ValueFormat = ValueFormatDecimal then
  begin
-   //Write(mc.FTextPtr^,value);
    CGWrite(mc,IntToStr(value));
  end
  else if mc.ValueFormat = ValueFormatHex then
  begin
-   //Write(mc.FTextPtr^,ByteToHEx(value,mc.LanId));
-   CGWrite(mc,ByteToHEx(value,mc.LanId));
+   CGWrite(mc,ByteToHex(value,mc.LanId));
  end;
 
  CGWriteComma(mc);     // method will decide if comma needed
@@ -295,14 +301,10 @@ begin
 
  if  mc.ValueFormat = ValueFormatDecimal then
  begin
-   //Write(mc.FTextPtr^,value);
-   //CGWrite(mc,IntToStr(smallint(value)));
    CGWrite(mc,IntToStr(value));
-
  end
  else if mc.ValueFormat = ValueFormatHex then
  begin
-   //Write(mc.FTextPtr^,IntegerToHex(value,mc.LanId));
    CGWrite(mc,IntegerToHex(value,mc.LanId));
  end;
 
@@ -346,9 +348,6 @@ begin
                  basic_integer:result:='&H'+IntToHex(UInt16(num),4);
                     basic_long:result:='&H'+IntToHex(UInt32(num),8);
   end;
- //if LanId=BasicLan then HStr:='&H'+HStr;
-// if LanId=PascalLan then HStr:='$'+HStr;
-// if LanId=CLan then HStr:='0x'+HStr;
 end;
 
 function VTypeToDecStr(num : longword;datatype : integer) : string;
@@ -382,13 +381,10 @@ begin
 
  if  mc.ValueFormat = ValueFormatDecimal then
  begin
-   //Write(mc.FTextPtr^,value);
-
    CGWrite(mc,VTypeToDecStr(value,datatype));
  end
  else if mc.ValueFormat = ValueFormatHex then
  begin
-   //Write(mc.FTextPtr^,ByteToHEx(value,mc.LanId));
    CGWrite(mc,VTypeToHexStr(value,datatype));
  end;
 
@@ -408,26 +404,21 @@ begin
                   CLan:CGWrite(mc,varypetostring(datatype)+' '+aname+'['+IntToStr(asize)+'] = {');
               BasicLan:CGWrite(mc,#39+' '+aname+' Size='+IntToStr(asize));
  end;
- CGWriteLn(mc);
+ if Lan<>GWBASICLan then CGWriteLn(mc);
 
  for i:=0 to asize-1 do
  begin
-   Case BitSize of BitSize8:begin
-                             CGWriteNumber(mc,BData[i],DataType);
-                           end;
-                 BitSize16:begin
-                             CGWriteNumber(mc,WData[i],DataType);
-                           end;
-                 BitSize32:begin
-                             CGWriteNumber(mc,LData[i],DataType);
-                           end;
-  end;
+   Case BitSize of BitSize8:CGWriteNumber(mc,BData[i],DataType);
+                  BitSize16:CGWriteNumber(mc,WData[i],DataType);
+                  BitSize32:CGWriteNumber(mc,LData[i],DataType);
+   end;
  end;
  Case Lan of PascalLan:CGWrite(mc,');');
-                    cLan:CGWrite(mc,'};');
+                  cLan:CGWrite(mc,'};');
  end;
  CGWriteLn(mc);
- CGWriteLn(mc);
+ if Lan<>GWBASICLan then CGWriteLn(mc);
+
 end;
 
 function GetBitSize(datatype : integer) : integer;
@@ -486,7 +477,6 @@ begin
  begin
    Blockread(F,DataPtr^,DataLength);
    ConvertToCode( mc,aname,DataPtr,asize,Lan,DataType,BitSize);
-
    FreeMem(DataPtr,padsize);
  end;
  close(F);

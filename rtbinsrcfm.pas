@@ -9,7 +9,7 @@ uses
   LazFileUtils, SpinEx,rtcodegen;
 
 Const
-  ProgramName = 'RtBinSrc v1.0 By RetroNick - Released May 7 - 2023';
+  ProgramName = 'RtBinSrc v1.1 By RetroNick - Released May 9 - 2023';
 
 type
 
@@ -17,9 +17,15 @@ type
 
   TForm1 = class(TForm)
     ArrayLabel: TLabel;
+    ItemsPerLineLabel: TLabel;
     ClearOnImport: TCheckBox;
     EditArrayName: TEdit;
-    Label1: TLabel;
+    LineStartLabel: TLabel;
+    LineStepsLabel: TLabel;
+    ItemsPerLineSpinEdit: TSpinEditEx;
+    LineStartSpinEdit: TSpinEditEx;
+    LineStepsSpinEdit: TSpinEditEx;
+    IndentSizeLabel: TLabel;
     OpenDialog: TOpenDialog;
     SaveAs: TButton;
     CopyToClipboard: TButton;
@@ -48,6 +54,7 @@ type
    NumType : integer;
 
    procedure SetBasicTypes;
+   procedure SetGWBasicTypes;
    procedure SetPascalTypes;
    procedure SetCTypes;
 
@@ -74,6 +81,12 @@ begin
                                                              2:NumType:=basic_long;
                          end;
                        end;
+              GWBasicLan:begin
+                           case NumTypeRadioGroup.ItemIndex of 0:NumType:=basic_byte;
+                                                               1:NumType:=basic_integer;
+                                                               2:NumType:=basic_long;
+                           end;
+                          end;
                   CLan:begin
                              case NumTypeRadioGroup.ItemIndex of 0:NumType:=c_char_signed;
                                                                  1:NumType:=c_char_unsigned;
@@ -115,6 +128,9 @@ procedure TForm1.FormCreate(Sender: TObject);
 begin
   Caption:=ProgramName;
   SetBasicTypes;
+  CGInit(CG);
+  CGSetLineNumber(CG,LineStartSpinEdit.Value,LineStepsSpinEdit.Value);
+  CGSetMemoProc(@FMemoAppend);
 end;
 
 procedure TForm1.ImportClick(Sender: TObject);
@@ -126,11 +142,16 @@ begin
     ShowMessage('Array Name Field Cannot be blank');
     exit;
   end;
-  CGInit(CG);
+  CGReset(CG);
   CGSetIndent(CG,indentSpinedit.Value);
-  CGSetMemoProc(@FMemoAppend);
+  CGSetValuesPerLine(CG,ItemsPerLineSpinEdit.Value);
   InfoLabel.Caption:='';
-  if ClearOnImport.Checked then MemoWithCode.Clear;
+  if ClearOnImport.Checked then
+  begin
+     MemoWithCode.Clear;
+     CGSetLineNumber(CG,LineStartSpinEdit.Value,LineStepsSpinEdit.Value);
+  end;
+
   error:=ImportBinFile(CG,OpenDialog.FileName, EditArrayName.Text,Lan, NumType,Format);
   if error<>0 then
   begin
@@ -156,8 +177,9 @@ end;
 procedure TForm1.LanRadioGroupClick(Sender: TObject);
 begin
   case LanRadioGroup.ItemIndex of 0:SetBasicTypes;
-                                  1:SetCTypes;
-                                  2:SetPascalTypes;
+                                  1:SetGWBasicTypes;
+                                  2:SetCTypes;
+                                  3:SetPascalTypes;
   end;
 end;
 
@@ -185,6 +207,22 @@ begin
   NumTypeRadioGroup.Items.Add('INTEGER');
   NumTypeRadioGroup.Items.Add('LONG');
   NumTypeRadioGroup.ItemIndex:=0;
+  IndentSpinEdit.Enabled:=false;
+  LineStartSpinEdit.Enabled:=false;
+  LineStepsSpinEdit.Enabled:=false;
+end;
+
+procedure TForm1.SetGWBasicTypes;
+begin
+  Lan:=GWBasicLan;
+  NumTypeRadioGroup.Items.Clear;
+  NumTypeRadioGroup.Items.Add('BYTE');
+  NumTypeRadioGroup.Items.Add('INTEGER');
+  NumTypeRadioGroup.Items.Add('LONG');
+  NumTypeRadioGroup.ItemIndex:=0;
+  IndentSpinEdit.Enabled:=false;
+  LineStartSpinEdit.Enabled:=true;
+  LineStepsSpinEdit.Enabled:=true;
 
 end;
 
@@ -198,6 +236,9 @@ begin
   NumTypeRadioGroup.Items.Add('Longint');
   NumTypeRadioGroup.Items.Add('Longword');
   NumTypeRadioGroup.ItemIndex:=0;
+  IndentSpinEdit.Enabled:=true;
+  LineStartSpinEdit.Enabled:=false;
+  LineStepsSpinEdit.Enabled:=false;
 end;
 
 procedure TForm1.SetCTypes;
@@ -211,6 +252,9 @@ begin
   NumTypeRadioGroup.Items.Add('long');
   NumTypeRadioGroup.Items.Add('unsigned long');
   NumTypeRadioGroup.ItemIndex:=0;
+  IndentSpinEdit.Enabled:=true;
+  LineStartSpinEdit.Enabled:=false;
+  LineStepsSpinEdit.Enabled:=false;
 end;
 
 

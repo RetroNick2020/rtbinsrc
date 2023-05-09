@@ -1,11 +1,12 @@
 object Form1: TForm1
-  Left = 479
-  Height = 500
+  Left = 513
+  Height = 560
   Top = 401
   Width = 858
+  BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsDialog
   Caption = 'Form1'
-  ClientHeight = 500
+  ClientHeight = 560
   ClientWidth = 858
   OnCreate = FormCreate
   LCLVersion = '2.0.10.0'
@@ -28,7 +29,7 @@ object Form1: TForm1
   end
   object LanRadioGroup: TRadioGroup
     Left = 576
-    Height = 104
+    Height = 120
     Top = 58
     Width = 185
     AutoFill = True
@@ -40,21 +41,22 @@ object Form1: TForm1
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
-    ClientHeight = 84
+    ClientHeight = 100
     ClientWidth = 181
     ItemIndex = 0
     Items.Strings = (
       'Basic'
+      'GWBASIC'
       'C'
       'Pascal'
     )
     OnClick = LanRadioGroupClick
-    TabOrder = 7
+    TabOrder = 10
   end
   object NumTypeRadioGroup: TRadioGroup
     Left = 576
     Height = 168
-    Top = 256
+    Top = 280
     Width = 185
     AutoFill = True
     Caption = 'Type'
@@ -65,15 +67,13 @@ object Form1: TForm1
     ChildSizing.ShrinkVertical = crsScaleChilds
     ChildSizing.Layout = cclLeftToRightThenTopToBottom
     ChildSizing.ControlsPerLine = 1
-    ClientHeight = 148
-    ClientWidth = 181
     OnClick = NumTypeRadioGroupClick
-    TabOrder = 9
+    TabOrder = 12
   end
   object FormatRadioGroup: TRadioGroup
     Left = 576
     Height = 72
-    Top = 168
+    Top = 192
     Width = 185
     AutoFill = True
     Caption = 'Format'
@@ -92,15 +92,15 @@ object Form1: TForm1
       'Hex'
     )
     OnClick = FormatRadioGroupClick
-    TabOrder = 8
+    TabOrder = 11
   end
   object MemoWithCode: TMemo
     Left = 16
-    Height = 336
-    Top = 136
+    Height = 361
+    Top = 176
     Width = 520
     ScrollBars = ssAutoBoth
-    TabOrder = 6
+    TabOrder = 9
     WordWrap = False
   end
   object InfoLabel: TLabel
@@ -133,25 +133,25 @@ object Form1: TForm1
     TabOrder = 2
   end
   object CopyToClipboard: TButton
-    Left = 592
+    Left = 576
     Height = 25
-    Top = 462
+    Top = 512
     Width = 120
     Caption = 'Copy To Clipboard'
     OnClick = CopyToClipboardClick
-    TabOrder = 10
+    TabOrder = 13
   end
   object SaveAs: TButton
     Left = 736
     Height = 25
-    Top = 462
+    Top = 512
     Width = 75
     Caption = 'Save As'
     OnClick = SaveAsClick
-    TabOrder = 11
+    TabOrder = 14
   end
   object ArrayLabel: TLabel
-    Left = 32
+    Left = 28
     Height = 15
     Top = 104
     Width = 63
@@ -176,7 +176,7 @@ object Form1: TForm1
     TabOrder = 5
     Value = 2
   end
-  object Label1: TLabel
+  object IndentSizeLabel: TLabel
     Left = 400
     Height = 15
     Top = 100
@@ -193,6 +193,65 @@ object Form1: TForm1
     Alignment = taLeftJustify
     Caption = 'Clear On Import'
     TabOrder = 4
+  end
+  object ItemsPerLineSpinEdit: TSpinEditEx
+    Left = 104
+    Height = 23
+    Top = 136
+    Width = 75
+    MaxLength = 0
+    NumbersOnly = True
+    TabOrder = 6
+    MinValue = 1
+    Value = 10
+  end
+  object ItemsPerLineLabel: TLabel
+    Left = 17
+    Height = 15
+    Top = 144
+    Width = 74
+    Caption = 'Items Per Line'
+    ParentColor = False
+  end
+  object LineStartSpinEdit: TSpinEditEx
+    Left = 264
+    Height = 23
+    Top = 136
+    Width = 75
+    MaxLength = 0
+    NumbersOnly = True
+    TabOrder = 7
+    MaxValue = 10000
+    MinValue = 1
+    Value = 1000
+  end
+  object LineStartLabel: TLabel
+    Left = 192
+    Height = 15
+    Top = 144
+    Width = 59
+    Caption = 'Line # Start'
+    ParentColor = False
+  end
+  object LineStepsSpinEdit: TSpinEditEx
+    Left = 464
+    Height = 23
+    Top = 136
+    Width = 75
+    MaxLength = 0
+    NumbersOnly = True
+    TabOrder = 8
+    MaxValue = 1000
+    MinValue = 1
+    Value = 10
+  end
+  object LineStepsLabel: TLabel
+    Left = 394
+    Height = 15
+    Top = 144
+    Width = 63
+    Caption = 'Line # Steps'
+    ParentColor = False
   end
   object OpenDialog: TOpenDialog
     Options = [ofFileMustExist, ofEnableSizing, ofViewDetail]
