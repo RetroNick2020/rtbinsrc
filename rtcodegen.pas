@@ -17,9 +17,6 @@ const
  ValueFormatDecimal = 0;
  ValueFormatHex = 1;
 
-
-
-
  c_char_signed = 1;
  c_char_unsigned = 2;
  c_int_signed = 3;
@@ -54,9 +51,10 @@ type
                       LineCount       : integer;  //line counter
                       LanId           : integer;
 
-                       LineBufStr : String;
-                       NextLineNumber : integer;
-                       StepNumber     : integer;
+                      LineBufStr : String;
+                      NextLineNumber : integer;
+                      StepNumber     : integer;
+                      ImportStatus   : boolean;
 
   end;
 
@@ -78,6 +76,8 @@ Procedure CGSetLineNumber(var mc : CodeGenRec;Num : integer;StepNum : integer);
 procedure CGSetMemoProc(MP : MemoProc);
 procedure CGWrite(var mc : CodeGenRec ; Msg : string);
 procedure CGWriteLn(var mc : CodeGenRec);
+
+procedure CGSetImportStatus(var mc : CodeGenRec;status : boolean);
 
 function ImportBinFile(var mc : CodeGenRec;filename,aname : string;Lan,DataType,nformat : integer) : word;
 
@@ -141,6 +141,7 @@ begin
  mc.LineBufStr:='';
  mc.NextLineNumber:=1000;
  mc.StepNumber:=10;
+ mc.ImportStatus:=TRUE;
  CGSetIndent(mc,10);
  CGSetIndentOnFirstLine(mc,true);
  CGSetValuesPerLine(mc,10);
@@ -153,16 +154,22 @@ end;
 //Reset VC and VCL - used for Repeated Imports for GWBASIC
 procedure CGReset(var mc : CodeGenRec);
 begin
- mc.VC:=0;
- mc.VCL:=0;
- mc.LineCount:=0;
- mc.LineBufStr:='';
+  mc.VC:=0;
+  mc.VCL:=0;
+  mc.LineCount:=0;
+  mc.LineBufStr:='';
+  mc.ImportStatus:=True;
+end;
+
+procedure CGSetImportStatus(var mc : CodeGenRec;status : boolean);
+begin
+  mc.ImportStatus:=Status;
 end;
 
 Procedure CGSetLineNumber(var mc : CodeGenRec;Num : integer;StepNum : integer);
 begin
- mc.NextLineNumber:=Num;
- mc.StepNumber:=StepNum;
+  mc.NextLineNumber:=Num;
+  mc.StepNumber:=StepNum;
 end;
 
 function CGGetGWNextLineNumber(var mc :CodeGenRec) : integer;
@@ -408,6 +415,7 @@ begin
 
  for i:=0 to asize-1 do
  begin
+   if mc.ImportStatus = FALSE then exit;
    Case BitSize of BitSize8:CGWriteNumber(mc,BData[i],DataType);
                   BitSize16:CGWriteNumber(mc,WData[i],DataType);
                   BitSize32:CGWriteNumber(mc,LData[i],DataType);

@@ -9,7 +9,7 @@ uses
   LazFileUtils, SpinEx,rtcodegen;
 
 Const
-  ProgramName = 'RtBinSrc v1.1 By RetroNick - Released May 9 - 2023';
+  ProgramName = 'RtBinSrc v1.2 By RetroNick - Released May 19 - 2023';
 
 type
 
@@ -52,6 +52,7 @@ type
    Lan : integer;
    Format : integer;
    NumType : integer;
+   Processing : boolean;
 
    procedure SetBasicTypes;
    procedure SetGWBasicTypes;
@@ -122,11 +123,17 @@ end;
 procedure FMemoAppend(msg : string);
 begin
   Form1.MemoWithCode.Append(msg);
+  if (Form1.CG.LineCount Mod 50) = 0 then
+  begin
+    Form1.InfoLabel.Caption:='Imported '+IntToStr(Form1.CG.LineCount)+' Lines';
+    Application.ProcessMessages;
+  end;
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   Caption:=ProgramName;
+  Processing:=False;
   SetBasicTypes;
   CGInit(CG);
   CGSetLineNumber(CG,LineStartSpinEdit.Value,LineStepsSpinEdit.Value);
@@ -137,12 +144,26 @@ procedure TForm1.ImportClick(Sender: TObject);
 var
   error : word;
 begin
+  if Processing then
+  begin
+     //ShowMessage('Processing Previous Import');
+     //InfoLabel.Caption:='Import Canceled';
+     Import.Caption:='Import';  //rename cancel back to import
+     CGSetImportStatus(CG,FALSE);
+     Processing:=FALSE;
+     exit;
+  end;
+
   if EditArrayName.Text='' then
   begin
     ShowMessage('Array Name Field Cannot be blank');
     exit;
   end;
+
+  Import.Caption:='Cancel';    //rename import button to cancel
+  Processing:=True;
   CGReset(CG);
+  //CGSetImportStatus(CG,TRUE);
   CGSetIndent(CG,indentSpinedit.Value);
   CGSetValuesPerLine(CG,ItemsPerLineSpinEdit.Value);
   InfoLabel.Caption:='';
@@ -156,14 +177,19 @@ begin
   if error<>0 then
   begin
     ShowMessage('Error Importing File ');
-    exit;
+  end
+  else
+  begin
+    if CG.ImportStatus then InfoLabel.Caption:='File Imported Successfully' else InfoLabel.Caption:='File Import Canceled';
   end;
-
-  InfoLabel.Caption:='File Imported';
+  Processing:=False;
+  Import.Caption:='Import';  //rename cancel back to import
 end;
 
 procedure TForm1.InFileClick(Sender: TObject);
 begin
+  if Processing then exit;
+
   // OpenDialog.Filter := 'Windows BMP|*.bmp|PNG|*.png|PC Paintbrush |*.pcx|DP-Amiga IFF LBM|*.lbm|DP-Amiga IFF BBM Brush|*.bbm|GIF|*.gif|RM RAW Files|*.raw|All Files|*.*';
   if OpenDialog.Execute then
   begin
@@ -176,6 +202,7 @@ end;
 
 procedure TForm1.LanRadioGroupClick(Sender: TObject);
 begin
+  if Processing then exit;
   case LanRadioGroup.ItemIndex of 0:SetBasicTypes;
                                   1:SetGWBasicTypes;
                                   2:SetCTypes;
@@ -185,11 +212,11 @@ end;
 
 procedure TForm1.CopyToClipboardClick(Sender: TObject);
 begin
+  if Processing then exit;
   MemoWithCode.SelectAll;
   MemoWithCode.CopyToClipboard;
   MemoWithCode.SelLength:=0;
   InfoLabel.Caption:='Code Copied to Clipboard';
-
 end;
 
 procedure TForm1.FormatRadioGroupClick(Sender: TObject);
@@ -223,7 +250,6 @@ begin
   IndentSpinEdit.Enabled:=false;
   LineStartSpinEdit.Enabled:=true;
   LineStepsSpinEdit.Enabled:=true;
-
 end;
 
 procedure TForm1.SetPascalTypes;
