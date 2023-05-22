@@ -1,14 +1,16 @@
 object Form1: TForm1
-  Left = 502
+  Left = 467
   Height = 560
-  Top = 400
+  Top = 370
   Width = 858
+  AllowDropFiles = True
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsDialog
   Caption = 'Form1'
   ClientHeight = 560
   ClientWidth = 858
   OnCreate = FormCreate
+  OnDropFiles = FormDropFiles
   LCLVersion = '2.0.10.0'
   object InFile: TButton
     Left = 16

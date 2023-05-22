@@ -6,10 +6,10 @@ interface
 
 uses
   Classes, SysUtils, Forms, Controls, Graphics, Dialogs, StdCtrls, ExtCtrls,
-  LazFileUtils, SpinEx,rtcodegen;
+  LazFileUtils, Types, SpinEx,rtcodegen;
 
 Const
-  ProgramName = 'RtBinSrc v1.2 By RetroNick - Released May 19 - 2023';
+  ProgramName = 'RtBinSrc v1.3 By RetroNick - Released May 22 - 2023';
 
 type
 
@@ -42,8 +42,10 @@ type
     procedure CopyToClipboardClick(Sender: TObject);
     procedure FormatRadioGroupClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
     procedure ImportClick(Sender: TObject);
     procedure InFileClick(Sender: TObject);
+    procedure InFileDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure LanRadioGroupClick(Sender: TObject);
     procedure NumTypeRadioGroupClick(Sender: TObject);
     procedure SaveAsClick(Sender: TObject);
@@ -140,6 +142,34 @@ begin
   CGSetMemoProc(@FMemoAppend);
 end;
 
+procedure TForm1.FormDropFiles(Sender: TObject; const FileNames: array of String
+  );
+var
+  MousePoint: TPoint;
+begin
+  if High(Filenames) > 0 then
+  begin
+    ShowMessage('Drag only one file!');
+    exit;
+  end;
+
+  if FileExists(FileNames[0]) then
+  begin
+    OpenDialog.FileName:=FileNames[0];
+    EditFileName.Caption:=FileNames[0];
+    EditArrayName.Text:=LowerCase(ExtractFileName(ExtractFileNameWithoutExt(FileNames[0])));
+    Import.Enabled:=True;
+  end
+  else
+  begin
+    ShowMessage('Invalid File/Directory!');
+    exit;
+  end;
+
+  MousePoint := ScreenToClient(Mouse.CursorPos);
+  if NOT (PtInRect(InFile.BoundsRect, MousePoint) or PtInRect(EditFilename.BoundsRect, MousePoint)) then ImportClick(Self);
+end;
+
 procedure TForm1.ImportClick(Sender: TObject);
 var
   error : word;
@@ -199,6 +229,13 @@ begin
     Import.Enabled:=true;
   end;
 end;
+
+procedure TForm1.InFileDragDrop(Sender, Source: TObject; X, Y: Integer);
+begin
+
+end;
+
+
 
 procedure TForm1.LanRadioGroupClick(Sender: TObject);
 begin
